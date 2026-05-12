@@ -1,0 +1,125 @@
+class Main {
+    function void main() {
+        var int a, b;
+
+        let a = 81;
+        let b = -3;
+
+        do Output.println();
+	
+	/** print inputs */
+        do Output.printString("Input a: ");
+        do Output.printInt(a);
+        do Output.println();
+
+        do Output.printString("Input b: ");
+        do Output.printInt(b);
+        do Output.println();
+        do Output.println();
+
+	/** arithematic */
+	do Output.printString("--- Arithematic ---");
+	do Output.println();
+	do Output.println();
+
+	/** addition */
+	do Output.printString("a + b: ");
+	do Output.printInt(a + b);
+        do Output.println();
+	
+	/** subtraction */
+	do Output.printString("a - b: ");
+	do Output.printInt(a - b);
+        do Output.println();
+	
+	/** multiplication */
+	do Output.printString("a * b: ");
+	do Output.printInt(Math.multiply(a, b));
+        do Output.println();
+
+ 	/** division */
+	do Output.printString("a / b: ");
+	do Output.printInt(Math.divide(a, b));
+        do Output.println();
+        do Output.println();
+		
+	
+	do Output.printString("--- Misc ---");
+	do Output.println();
+        do Output.println();
+
+  	/** square root */
+	do Output.printString("sqrt(a): ");
+	do Output.printInt(Math.sqrt(a));
+        do Output.println();
+
+	/** absolute */
+        do Output.printString("abs(b): ");
+        do Output.printInt(Math.abs(b));
+        do Output.println();
+
+        /** minimum */
+        do Output.printString("min(a, b): ");
+        do Output.printInt(Math.min(a, b));
+        do Output.println();
+
+        /** maximum */
+        do Output.printString("max(a, b): ");
+        do Output.printInt(Math.max(a, b));
+        do Output.println();
+        do Output.println();
+
+
+	do Output.printString("--- Bitwise Logical ---");
+	do Output.println();
+	do Output.println();
+	
+	do Output.printString("bin(a): ");
+	do printBinary(a);
+        do Output.println();
+	
+	do Output.printString("bin(b): ");
+	do printBinary(b);
+        do Output.println();
+
+	/** logical AND */
+	do Output.printString("and(a, b): ");
+	do printBinary(a & b);
+        do Output.println();
+
+	/** logical OR */
+	do Output.printString("or(a, b): ");
+	do printBinary(a | b);
+	do Output.println();
+
+	/** logical NOT */	
+	do Output.printString("not(a): ");
+	do printBinary(~a);
+        do Output.println();
+        do Output.println();
+
+	do Output.printString("Have a nice day!"); 
+	
+	return;
+    }
+
+    function void printBinary(int x) {
+        var int i, mask;
+
+        let mask = 16384; // 2^14 (highest safe power in signed int)
+        let i = 0;
+
+        while (i < 16) {
+	    if ((x & mask) > 0) {
+	        do Output.printString("1");
+	    } else {
+	        do Output.printString("0");
+	    }
+
+	    let mask = mask / 2;
+	    let i = i + 1;
+        }
+
+        return;
+    }
+}

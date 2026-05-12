@@ -1,0 +1,206 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Screen.jack
+// Changes: Doc changes for screen dimensions and colors.
+
+/**
+* A library of functions for displaying graphics on the screen.
+* The connected LCD physical screen consists of 320 rows (indexed 0..319, top to bottom)
+* of 240 pixels each (indexed 0..239, left to right). The top left pixel on 
+* the screen is indexed (0,0). Every pixel can be set to a 16 bit color code composed of
+* RGB parts of 5 bit red, 6 bit green and 5 bit blue: rrrrrggggggbbbbb.
+*/
+class Screen {
+    static boolean color;
+    static int xMax, yMax;
+
+    /** Initializes the Screen. */
+    function void init() {
+        var boolean landscape;
+        let landscape = false;
+        let color = true;
+        
+        if (landscape) {
+            let xMax = 319;
+            let yMax = 239;
+        } else {
+            let xMax = 239;
+            let yMax = 319;
+        }
+        return;
+    }
+
+    /** Erases the entire screen. */
+    function void clearScreen() {
+        var int i, j, c;
+        do ScreenExt.setWindow(0,0,xMax,yMax);
+        let c = ScreenExt.getBackColor();
+
+        // inline the remaining logic for perf
+        // call writeData() w*h times
+        do ScreenExt.writeCommand(44); // RAMWR 0x2C (write to VRAM)
+        
+        let i = xMax; // width
+        while (i > -1) {
+            let j = yMax; // height
+            while (j > -1) {
+                do ScreenExt.writeData(c);
+                let j = j - 1;
+            }
+            let i = i - 1;
+        }
+
+        do ScreenExt._completeTransaction();
+        return;
+    }
+
+    /** Sets the current color, to be used for all subsequent drawXXX commands.
+     *  Black is represented by true, white by false. */
+    function void setColor(boolean b) {
+        // Unused in FPGA implementation but provided for API compatibility
+        if (b) {
+            do ScreenExt.setPenColor(ScreenExt.BLACK());
+        } else {
+            do ScreenExt.setPenColor(ScreenExt.WHITE());
+        }
+        return;
+    }
+
+    /** Draws the (x,y) pixel, using the current color. */
+    function void drawPixel(int x, int y) {
+        do Screen.drawRectangle(x,y,x,y);
+        return;
+    }
+
+    /** Optionally flip x/y coords. */
+    function void _drawConditional(int x, int y, boolean flip) {
+        if (flip) {
+            do Screen.drawPixel(y, x);
+        } else {
+            do Screen.drawPixel(x, y);
+        }
+        return;
+    }
+
+    /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        // Bresenham’s line drawing algorithm
+        var int y, x, height, width, temp, accumulator;
+        var boolean flip, direction;
+        var int end, horDelta, diagDelta;
+
+        let width = Math.abs(x2-x1);
+        let height = Math.abs(y2-y1);
+        let flip = (width < height); // flip if angle > 45 degrees
+        
+        // normalize direction so loop iterates either
+        // left-to-right or bottom-to-top (ascending)        
+        if ((flip & (y2 < y1)) | (~flip & (x2 < x1))) {
+            let temp = x1;
+            let x1 = x2;
+            let x2 = temp;
+            let temp = y1;
+            let y1 = y2;
+            let y2 = temp;
+        }
+        if (flip) {
+            let temp = width;
+            let width = height;
+            let height = temp;
+            let x = y1;
+            let y = x1;
+            let end = y2;
+            let direction = (x1 > x2);
+        } else {
+            let x = x1;
+            let y = y1;
+            let end = x2;
+            let direction = (y1 > y2);
+        }
+
+        // Bresenham error terms: track whether to change y (slope)
+        let accumulator = (2 * height) - width;
+        let horDelta = (2 * height);
+        let diagDelta = 2 * (height-width);
+        do Screen._drawConditional(x,y,flip);
+
+        while (x < end) {
+            if (accumulator < 0) {
+                // stay on current gradient
+                let accumulator = accumulator + horDelta;
+            } else {
+                // inc or dec gradient
+                let accumulator = accumulator + diagDelta;
+                if (direction) {
+                    let y = y - 1;
+                } else {
+                    let y = y + 1;
+                }
+            }
+            let x = x + 1;
+            do Screen._drawConditional(x,y,flip);
+        }
+        return;
+    }
+
+    /** Draws a filled rectangle whose top left corner is (x1, y1)
+     * and bottom right corner is (x2,y2), using the current color. */
+    function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int i, j, c;
+        do ScreenExt.setWindow(x1,y1,x2,y2);
+        let c = ScreenExt.getPenColor();
+
+        // inline the remaining logic for perf
+        // call writeData() w*h times
+        do ScreenExt.writeCommand(44); // RAMWR 0x2C (write to VRAM)
+        
+        let i = x2-x1; // width
+        while (i > -1) {
+            let j = y2-y1; // height
+            while (j > -1) {
+                do ScreenExt.writeData(c);
+                let j = j - 1;
+            }
+            let i = i - 1;
+        }
+
+        do ScreenExt._completeTransaction();
+        return;
+    }
+
+    /** Efficiently mirror a circle octant to fill the remaining shape. */
+    function void _drawSymetric(int x1, int y1, int x2, int y2) {
+        do Screen.drawRectangle(x1+x2, y1-y2, x1-x2, y1-y2); // bottom
+        do Screen.drawRectangle(x1+x2, y1+y2, x1-x2, y1+y2); // top
+        do Screen.drawRectangle(x1-y2, y1-x2, x1+y2, y1-x2); // middle-bottom
+        do Screen.drawRectangle(x1-y2, y1+x2, x1+y2, y1+x2); // middle-top
+        return;
+    }
+
+    /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
+    function void drawCircle(int x, int y, int r) {
+        // Bresenham's Circle Drawing Algorithm
+        var int xOffset, yOffset, accumulator;
+        if (((x-r) < 0) | ((x+r) > xMax) | ((y-r) < 0) | ((y+r) > yMax)) {
+            do Sys.error(13); // radius bounds check
+        }
+
+        // approximate the circle without using sqrt()
+        // calculates one octant then mirrors the rest using _drawSymetric()
+        let yOffset = r;
+        let accumulator = 1 - r;
+        do Screen._drawSymetric(x, y, xOffset, yOffset);
+        while (yOffset > xOffset) {
+            if (accumulator < 0) {
+                let accumulator = accumulator + (2 * xOffset) + 3;
+            } else {
+                let accumulator = accumulator + (2 * (xOffset-yOffset)) + 5;
+                let yOffset = yOffset - 1;
+            }
+            let xOffset = xOffset + 1;
+            do Screen._drawSymetric(x, y, xOffset, yOffset);
+        }
+        return;
+    }
+}

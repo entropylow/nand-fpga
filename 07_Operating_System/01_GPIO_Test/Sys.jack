@@ -1,0 +1,20 @@
+/**
+ * A library that supports various program execution services.
+ */
+class Sys {
+
+    /** Performs all the initializations required by the OS. */
+    function void init() {
+        do GPIO.init();
+        while (true) {
+            do GPIO.writeLed(GPIO.readBut());
+        }
+        return;
+    }
+
+    function void wait(int duration) {
+        // stubbed to satisfy compiler
+        return;
+    }
+
+}
