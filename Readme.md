@@ -2,7 +2,7 @@
 
 ## Disclaimer
 
-This is both a complete implementation & fork of Michael Schröder's [course](https://gitlab.com/x653/nand2tetris-fpga). I have made my own revisions, extensions and corrections to:
+This was a final year group project that is both a complete implementation & fork of Michael Schröder's [course](https://gitlab.com/x653/nand2tetris-fpga). We have made our own revisions, extensions and corrections to:
 
 * Update the architecture to support current hardware revisions of the relevant boards.
 * Update the code for modern tooling.
